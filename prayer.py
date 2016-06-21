@@ -95,7 +95,6 @@ class PrayerWebhook(object):
     def handle_postback(sender, postback):
         payload = json.loads(postback['payload'])
         sender_id = sender['id']
-
         if 'user_event' in payload:
             event_type = payload['user_event']
             callbacks = PrayerWebhook.handle_user_event(sender_id, event_type, payload)
@@ -140,9 +139,19 @@ class PrayerWebhook(object):
             intent.ts = 1234
             db.session.add(intent)
             db.session.commit()
+            response_message = utils.response_buttons(
+                user_gettext(sender_id, u"What is your prayer request?"),
+                [
+                    {
+                        "type":"postback",
+                        "title":"Odwołaj modlitwę", #nie ma wersji angielskiej
+                        "payload": json.dumps({"user_event": "delete_prayer"})
+                    }
+                ])
             return {
-                sender_id : utils.response_text(user_gettext(sender_id, u"What is your prayer request?")),
+                sender_id : response_message
             }
+
         elif event_type == 'want_to_pray':
             # prayers = db.fetch_history({"commiter_id": ""}, displayed_prayers_limit)
             prayers = Intent.query.limit(displayed_prayers_limit).all()
